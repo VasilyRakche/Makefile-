@@ -4,8 +4,9 @@
  * Published on: beginnersbook.com
  */
 #include <stdio.h>
+#include "antee.h"
 
-void main()
+void ant()
 {
     int num;
  

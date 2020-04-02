@@ -1,45 +1,80 @@
+.SECONDARY:
+
 MAKEFILE += -r
 DEP_DIR := .deps
-MODULES := ant
 MKDIR := mkdir
 BUILD_DIR ?= build
+PROJECT := main
 
-# includes **
-INC_PATHS := \
-	$(BUILD_DIR)
+AR := ar 
 
-#look for include files in
-#each of the modules
-CFLAGS += $(patsubst %,-I%,\
-	$(MODULES))
+
+MODULES := ant/antee
+#***********
+# VARIABLE definitions
+#***********
+
+# includes 
+INC_PATHS := 
+#c compiler flags
+CFLAGS :=
+
+ARFLAGS := rcs
 #extra libraries if required
 LIBS :=
 #each module will add to this
 SRC :=
-#include the description for
-#each module
+
+#***********
+# INCLUDE module descriptions
+#***********
 include $(patsubst %,\
 	%/module.mk,$(MODULES))
+
+
+#***********
+# CHECK
+#***********
+
+# $(warning HEY)
+
+#***********
+# UPDATES
+#***********
 
 CFLAGS +=$(patsubst %,-I%,\
 	$(INC_PATHS))
 
-#determine the object files
-OBJ :=                    	\
-	$(patsubst %.c,$(BUILD_DIR)/%.o,		\
-	$(subst /src,,$(SRC)))	
-# $(subst /src,,$(SRC)))
-
-#link the program
-prog: $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIBS)
+# #determine the object files
+# OBJ :=                    	\
+# 	$(patsubst %.c,$(BUILD_DIR)/%.o,		\
+# 	$(subst /src,,$(SRC)))	
 
 sources = $(1)src/$(basename $(2)).c
+variable = $($(1))
+#***********
+# PROGRAM compilation
+#***********
+
+prog: $(BIN_LIBS)
+	@echo "DONE"
+	# $(CC) $(CFLAGS) -o $@ $(BIN_LIBS) $(LIBS)
 
 .SECONDEXPANSION:
-%.o:$$(call sources,	\
+%.a: $$(warning $$($$(subst .a,.OBJ,$$@))) $$($$(subst .a,.OBJ,$$@))
+	@echo ".a****** $^"
+	@echo ".a****** $(patsubst %.a,%.OBJ,$@)" 
+	$(AR) $(ARFLAGS) $(BUILD_DIR)/$@ $(%.OBJ)
+
+
+#***********
+# GENERATE regular object files
+#***********
+.SECONDEXPANSION:
+%.o: $$(call sources,						\
 	$$(subst $$(BUILD_DIR)/,,$$(dir $$@)),	\
-	$$(notdir $$@)) 	\
+	$$(notdir $$@)							\
+	) 										\
 	$$(dir $$@) 	
 	# @echo "$(call sources_o,$(dir $@),$(notdir $@))"
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -48,17 +83,23 @@ $(BUILD_DIR)%:
 	@echo "build************ $@"
 	$(MKDIR) -p $@
 
-#include the C include
-#dependencies
+#***********
+# INCLUDE dependencies
+#***********
+
 include $(patsubst \
-	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$(OBJ))
-	
-#calculate C include
-#dependencies
+	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$($(patsubst %,%.OBJ,$(MODULES))))
+
+
+
+#***********
+# CALCULATE dependencies
+#***********
 .SECONDEXPANSION:
-%.d: $$(call sources,	\
+%.d: $$(call sources,						\
 	$$(subst $$(DEP_DIR)/,,$$(dir $$@)),	\
-	$$(notdir $$@)) 	\
+	$$(notdir $$@)							\
+	) 										\
 	$$(dir $$@)	
 	# @echo ".d******* $(call sources,$(subst $(DEP_DIR)/,,$(dir $@)),$(notdir $@))"
 	bash depend.sh 'dirname $<' \
@@ -66,6 +107,11 @@ include $(patsubst \
 
 $(DEP_DIR)%:
 	$(MKDIR) -p $@
+
+
+#***********
+# PHONY functions
+#***********
 
 .PHONY: clean
 clean:
