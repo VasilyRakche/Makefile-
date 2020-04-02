@@ -1,1 +1,1 @@
-SRC += ant/main.c
+SRC += ant/src/main.c
