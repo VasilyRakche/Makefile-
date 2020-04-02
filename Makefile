@@ -53,30 +53,33 @@ CFLAGS +=$(patsubst %,-I%,\
 sources = $(1)src/$(basename $(2)).c
 variable = 	$(dir $(subst $(addprefix /,$(2)),,$(1)))src/$(notdir $(subst $(addprefix /,$(2)),,$(1)))/$(basename $(2)).c
 		# $(warning variable and $(2) $(1) and $(subst $(addprefix /,$(2)),,$(1)) )
+objects = $(patsubst $(BUILD_DIR)/%.a,%.OBJ,$(1))
 #***********
 # PROGRAM compilation
 #***********
 
-prog: $(BIN_LIBS)
+prog: $(addprefix $(BUILD_DIR)/,$(BIN_LIBS))
 	@echo "DONE"
 	# $(CC) $(CFLAGS) -o $@ $(BIN_LIBS) $(LIBS)
 
 .SECONDEXPANSION:
-%.a: $$($$(subst .a,.OBJ,$$@)) 
-	# $$(warning $$($$(subst .a,.OBJ,$$@)))
+%.a: $$($$(call objects,$$@))
 	# @echo ".a****** $^"
 	# @echo ".a****** $(patsubst %.a,%.OBJ,$@)" 
-	$(AR) $(ARFLAGS) $(BUILD_DIR)/$@ $(addprefix $(BUILD_DIR)/,$(subst /src,,$^))
+	$(AR) $(ARFLAGS) $@ $^
 
 
 #***********
 # GENERATE regular object files
 #***********
 .SECONDEXPANSION:
-%.o:%.c 										\
-	$$(BUILD_DIR)/$$(subst /src,,$$(dir $$@))	
+%.o:$$(call variable,							\
+	$$(subst $$(BUILD_DIR)/,,$$@),				\
+	$$(notdir $$@)							\
+	)									\
+	$$(dir $$@)		
 	# @echo ".o******$(BUILD_DIR)/$(subst /src,,$@)"
-	$(CC) $(CFLAGS) -c $< -o $(BUILD_DIR)/$(subst /src,,$@)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)%: 
 	# @echo "build************ $@"
@@ -87,8 +90,10 @@ $(BUILD_DIR)%:
 #***********
 
 include $(patsubst \
-	%.o,$(DEP_DIR)/%.d,$(subst /src,,$($(patsubst %,%.OBJ,$(MODULES)))))
+	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$(subst /src,,$($(patsubst %,%.OBJ,$(MODULES)))))
 
+include $(patsubst \
+	$(BUILD_DIR)/%.a,$(DEP_DIR)/%.d,$(addprefix $(BUILD_DIR)/,$(BIN_LIBS)))
 
 
 #***********
@@ -104,6 +109,10 @@ include $(patsubst \
 	bash depend.sh 'dirname $@' \
 	'dirname $(patsubst $(DEP_DIR)%,$(BUILD_DIR)%,$@)'   \
 	$(CFLAGS) $< > $@
+
+.SECONDEXPANSION:
+$(DEP_DIR)/%.d: $(BUILD_DIR)/%.a $$(dir $$@)
+	echo "$@ $<: $($*.OBJ)" > $@
 
 $(DEP_DIR)%:
 	$(MKDIR) -p $@

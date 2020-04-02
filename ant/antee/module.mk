@@ -10,9 +10,9 @@ INC_PATHS += $(INC_DIR)
 $(DIR)/$(NAME).SRC := 		\
 	$(wildcard $(SRC_DIR)/*.c)
 $(DIR)/$(NAME).OBJ := 		\
-	$(patsubst %.c,%.o,$($(DIR)/$(NAME).SRC))
-	# $(patsubst %.c,$(BUILD_DIR)/%.o,		
-	# $(subst /src,,$($(DIR)/$(NAME).SRC)))
+	$(patsubst %.c,$(BUILD_DIR)/%.o,		\
+	$(subst /src,,$($(DIR)/$(NAME).SRC)))
+	# $(patsubst %.c,%.o,$($(DIR)/$(NAME).SRC))
 	
 SRC += ant/src/main.c
 
