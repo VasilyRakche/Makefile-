@@ -34,17 +34,13 @@ OBJ :=                    	\
 prog: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIBS)
 
-#  $$(patsubst %,$(BUILD_DIR)/%,$$(dir $$<))
-
-# sources_o = $$(subst $$(BUILD_DIR)/,,$$(1))$$(patsubst %.o,src/%.c,$$(2))
-# sources_d = $$(subst $$(DEP_DIR)/,,$$(1))$$(patsubst %.d,src/%.c,$$(2))
-
-sources_d = $(subst $(DEP_DIR)/,,$(1))$(patsubst %.d,src/%.c,$(2))
-sources_o = $(subst $(BUILD_DIR)/,,$(1))$(patsubst %.o,src/%.c,$(2))
-
+sources = $(1)src/$(basename $(2)).c
 
 .SECONDEXPANSION:
-%.o:  $$(call sources_o,$$(dir $$@),$$(notdir $$@)) $$(dir $$@)
+%.o:$$(call sources,	\
+	$$(subst $$(BUILD_DIR)/,,$$(dir $$@)),	\
+	$$(notdir $$@)) 	\
+	$$(dir $$@) 	
 	# @echo "$(call sources_o,$(dir $@),$(notdir $@))"
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -56,11 +52,15 @@ $(BUILD_DIR)%:
 #dependencies
 include $(patsubst \
 	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$(OBJ))
+	
 #calculate C include
 #dependencies
 .SECONDEXPANSION:
-$(DEP_DIR)/%.d: $$(call sources_d,$$(dir $$@),$$(notdir $$@)) $$(dir $$@)
-	# @echo ".d******* $(call sources_d,$(dir $@),$(notdir $@))"
+%.d: $$(call sources,	\
+	$$(subst $$(DEP_DIR)/,,$$(dir $$@)),	\
+	$$(notdir $$@)) 	\
+	$$(dir $$@)	
+	# @echo ".d******* $(call sources,$(subst $(DEP_DIR)/,,$(dir $@)),$(notdir $@))"
 	bash depend.sh 'dirname $<' \
 	$(CFLAGS) $< > $@
 
