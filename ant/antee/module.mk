@@ -13,8 +13,8 @@ $(DIR)/$(NAME).OBJ := 		\
 	$(patsubst %.c,$(BUILD_DIR)/%.o,		\
 	$(subst /src,,$($(DIR)/$(NAME).SRC)))
 	# $(patsubst %.c,%.o,$($(DIR)/$(NAME).SRC))
-	
-SRC += ant/src/main.c
+
+# SRC += ant/src/main.c
 
 # $(warning A top-level warning $(SRC))
 # $(warning In module.mk)

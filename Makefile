@@ -92,9 +92,9 @@ $(BUILD_DIR)%:
 include $(patsubst \
 	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$(subst /src,,$($(patsubst %,%.OBJ,$(MODULES)))))
 
-include $(patsubst \
+DEP_LIB := $(patsubst \
 	$(BUILD_DIR)/%.a,$(DEP_DIR)/%.d,$(addprefix $(BUILD_DIR)/,$(BIN_LIBS)))
-
+include $(DEP_LIB)
 
 #***********
 # CALCULATE dependencies
@@ -105,14 +105,16 @@ include $(patsubst \
 	$$(notdir $$@)							\
 	)									\
 	$$(dir $$@)	
-	# @echo ".d******* $(call sources,$(subst $(DEP_DIR)/,,$(dir $@)),$(notdir $@))"
+	@echo ".d******* $^"
 	bash depend.sh 'dirname $@' \
 	'dirname $(patsubst $(DEP_DIR)%,$(BUILD_DIR)%,$@)'   \
 	$(CFLAGS) $< > $@
 
+
 .SECONDEXPANSION:
-$(DEP_DIR)/%.d: $(BUILD_DIR)/%.a $$(dir $$@)
-	echo "$@ $<: $($*.OBJ)" > $@
+$(DEP_LIB): $$(subst .d,.a,$$(subst $$(DEP_DIR),$$(BUILD_DIR),$$@)) $$(dir $$@)
+	$(warning dp**$($(subst $(BUILD_DIR)/,,$(basename $<)).OBJ))
+	echo "$@ $<: $($(subst $(BUILD_DIR)/,,$(basename $<)).OBJ)" > $@
 
 $(DEP_DIR)%:
 	$(MKDIR) -p $@
