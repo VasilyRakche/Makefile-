@@ -1,6 +1,6 @@
 .SECONDARY:
 
-MAKEFILE += -r
+MAKEFLAGS += -r
 DEP_DIR := .deps
 MKDIR := mkdir
 BUILD_DIR ?= build
@@ -51,7 +51,8 @@ CFLAGS +=$(patsubst %,-I%,\
 # 	$(subst /src,,$(SRC)))	
 
 sources = $(1)src/$(basename $(2)).c
-variable = $($(1))
+variable = 	$(dir $(subst $(addprefix /,$(2)),,$(1)))src/$(notdir $(subst $(addprefix /,$(2)),,$(1)))/$(basename $(2)).c
+		# $(warning variable and $(2) $(1) and $(subst $(addprefix /,$(2)),,$(1)) )
 #***********
 # PROGRAM compilation
 #***********
@@ -61,26 +62,24 @@ prog: $(BIN_LIBS)
 	# $(CC) $(CFLAGS) -o $@ $(BIN_LIBS) $(LIBS)
 
 .SECONDEXPANSION:
-%.a: $$(warning $$($$(subst .a,.OBJ,$$@))) $$($$(subst .a,.OBJ,$$@))
-	@echo ".a****** $^"
-	@echo ".a****** $(patsubst %.a,%.OBJ,$@)" 
-	$(AR) $(ARFLAGS) $(BUILD_DIR)/$@ $(%.OBJ)
+%.a: $$($$(subst .a,.OBJ,$$@)) 
+	# $$(warning $$($$(subst .a,.OBJ,$$@)))
+	# @echo ".a****** $^"
+	# @echo ".a****** $(patsubst %.a,%.OBJ,$@)" 
+	$(AR) $(ARFLAGS) $(BUILD_DIR)/$@ $(addprefix $(BUILD_DIR)/,$(subst /src,,$^))
 
 
 #***********
 # GENERATE regular object files
 #***********
 .SECONDEXPANSION:
-%.o: $$(call sources,						\
-	$$(subst $$(BUILD_DIR)/,,$$(dir $$@)),	\
-	$$(notdir $$@)							\
-	) 										\
-	$$(dir $$@) 	
-	# @echo "$(call sources_o,$(dir $@),$(notdir $@))"
-	$(CC) $(CFLAGS) -c $< -o $@
+%.o:%.c 										\
+	$$(BUILD_DIR)/$$(subst /src,,$$(dir $$@))	
+	# @echo ".o******$(BUILD_DIR)/$(subst /src,,$@)"
+	$(CC) $(CFLAGS) -c $< -o $(BUILD_DIR)/$(subst /src,,$@)
 
 $(BUILD_DIR)%: 
-	@echo "build************ $@"
+	# @echo "build************ $@"
 	$(MKDIR) -p $@
 
 #***********
@@ -88,7 +87,7 @@ $(BUILD_DIR)%:
 #***********
 
 include $(patsubst \
-	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$($(patsubst %,%.OBJ,$(MODULES))))
+	%.o,$(DEP_DIR)/%.d,$(subst /src,,$($(patsubst %,%.OBJ,$(MODULES)))))
 
 
 
@@ -96,13 +95,14 @@ include $(patsubst \
 # CALCULATE dependencies
 #***********
 .SECONDEXPANSION:
-%.d: $$(call sources,						\
-	$$(subst $$(DEP_DIR)/,,$$(dir $$@)),	\
+%.d:$$(call variable,		\
+	$$(subst $$(DEP_DIR)/,,$$@),				\
 	$$(notdir $$@)							\
-	) 										\
+	)									\
 	$$(dir $$@)	
 	# @echo ".d******* $(call sources,$(subst $(DEP_DIR)/,,$(dir $@)),$(notdir $@))"
-	bash depend.sh 'dirname $<' \
+	bash depend.sh 'dirname $@' \
+	'dirname $(patsubst $(DEP_DIR)%,$(BUILD_DIR)%,$@)'   \
 	$(CFLAGS) $< > $@
 
 $(DEP_DIR)%:
@@ -115,4 +115,4 @@ $(DEP_DIR)%:
 
 .PHONY: clean
 clean:
-	rm -rf prog $(DEP_DIR) $(BUILD_DIR)
+	rm -rf prog $(wildcard $(SRC_DIR)/*.o) $(DEP_DIR) $(BUILD_DIR)
