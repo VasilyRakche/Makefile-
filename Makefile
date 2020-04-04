@@ -6,7 +6,35 @@ MKDIR := mkdir
 BUILD_DIR ?= build
 PROJECT := main
 
-AR := ar 
+# compiler options 
+CC := arm-none-eabi-gcc
+AR := arm-none-eabi-ar
+LD := arm-none-eabi-gcc
+
+#***********
+# VARIABLE definitions
+#***********
+
+# includes 
+INC_PATHS :=	\
+	ld 
+# compiler flags
+CFLAGS :=	\
+	-mcpu=cortex-m3 \
+ 	-mthumb -Wall	\
+	-g	\
+	-O0
+
+LDFLAGS := 	\
+	-Wl,	\
+	--gc-sections,	\
+	-Map=$@.map,	\
+	-cref,	\
+	--orphan-handling=warn,	\
+	-u,Reset_Handler\
+	-T stm32.ld 
+
+ARFLAGS := rcs
 
 
 MODULES := ant/antee
@@ -14,16 +42,11 @@ MODULES := ant/antee
 # VARIABLE definitions
 #***********
 
-# includes 
-INC_PATHS := 
-#c compiler flags
-CFLAGS :=
-
-ARFLAGS := rcs
 #extra libraries if required
 LIBS :=
 #each module will add to this
 SRC :=
+
 
 #***********
 # INCLUDE module descriptions
@@ -58,12 +81,11 @@ objects = $(patsubst $(BUILD_DIR)/%.a,%.OBJ,$(1))
 # PROGRAM compilation
 #***********
 
-prog: $(addprefix $(BUILD_DIR)/,$(BIN_LIBS))
-	@echo "DONE"
+	# @echo "DONE"
 	# $(CC) $(CFLAGS) -o $@ $(BIN_LIBS) $(LIBS)
 
 .SECONDEXPANSION:
-%.a: $$($$(call objects,$$@))
+build/ant/antee.a: $$($$(call objects,$$@))
 	# @echo ".a****** $^"
 	# @echo ".a****** $(patsubst %.a,%.OBJ,$@)" 
 	$(AR) $(ARFLAGS) $@ $^
@@ -76,8 +98,9 @@ prog: $(addprefix $(BUILD_DIR)/,$(BIN_LIBS))
 %.o:$$(call variable,							\
 	$$(subst $$(BUILD_DIR)/,,$$@),				\
 	$$(notdir $$@)							\
-	)									\
-	$$(dir $$@)		
+	)									
+	# $$(dir $$@)		
+	$(MKDIR) -p $(dir $@)
 	# @echo ".o******$(BUILD_DIR)/$(subst /src,,$@)"
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -103,8 +126,9 @@ include $(DEP_LIB)
 %.d:$$(call variable,		\
 	$$(subst $$(DEP_DIR)/,,$$@),				\
 	$$(notdir $$@)							\
-	)									\
-	$$(dir $$@)	
+	)									
+	# $$(dir $$@)
+	$(MKDIR) -p $(dir $@)	
 	@echo ".d******* $^"
 	bash depend.sh 'dirname $@' \
 	'dirname $(patsubst $(DEP_DIR)%,$(BUILD_DIR)%,$@)'   \
@@ -112,7 +136,8 @@ include $(DEP_LIB)
 
 
 .SECONDEXPANSION:
-$(DEP_LIB): $$(subst .d,.a,$$(subst $$(DEP_DIR),$$(BUILD_DIR),$$@)) $$(dir $$@)
+$(DEP_LIB): $$(subst .d,.a,$$(subst $$(DEP_DIR),$$(BUILD_DIR),$$@))
+	$(MKDIR) -p $(dir $@)
 	$(warning dp**$($(subst $(BUILD_DIR)/,,$(basename $<)).OBJ))
 	echo "$@ $<: $($(subst $(BUILD_DIR)/,,$(basename $<)).OBJ)" > $@
 
