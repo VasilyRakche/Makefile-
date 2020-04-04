@@ -4,7 +4,7 @@ MAKEFLAGS += -r
 DEP_DIR := .deps
 MKDIR := mkdir
 BUILD_DIR ?= build
-PROJECT := main
+PROJECT := stm32f10x
 
 # compiler options 
 CC := arm-none-eabi-gcc
@@ -18,6 +18,8 @@ LD := arm-none-eabi-gcc
 # includes 
 INC_PATHS :=	\
 	ld 
+
+BIN_LIBS :=
 # compiler flags
 CFLAGS :=	\
 	-mcpu=cortex-m3 \
@@ -37,23 +39,22 @@ LDFLAGS := 	\
 ARFLAGS := rcs
 
 
-MODULES := ant/antee
+MODULES := lib/main lib/stm32boot 
+
 #***********
 # VARIABLE definitions
 #***********
 
 #extra libraries if required
 LIBS :=
-#each module will add to this
-SRC :=
 
 
 #***********
 # INCLUDE module descriptions
 #***********
+
 include $(patsubst %,\
 	%/module.mk,$(MODULES))
-
 
 #***********
 # CHECK
@@ -81,11 +82,12 @@ objects = $(patsubst $(BUILD_DIR)/%.a,%.OBJ,$(1))
 # PROGRAM compilation
 #***********
 
-	# @echo "DONE"
+prog: $(patsubst %,$(BUILD_DIR)/%.a,$(MODULES))
+	@echo "DONE"
 	# $(CC) $(CFLAGS) -o $@ $(BIN_LIBS) $(LIBS)
 
 .SECONDEXPANSION:
-build/ant/antee.a: $$($$(call objects,$$@))
+%.a: $$($$(call objects,$$@))
 	# @echo ".a****** $^"
 	# @echo ".a****** $(patsubst %.a,%.OBJ,$@)" 
 	$(AR) $(ARFLAGS) $@ $^
@@ -104,20 +106,36 @@ build/ant/antee.a: $$($$(call objects,$$@))
 	# @echo ".o******$(BUILD_DIR)/$(subst /src,,$@)"
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)%: 
-	# @echo "build************ $@"
-	$(MKDIR) -p $@
+# $(BUILD_DIR)%: 
+# 	# @echo "build************ $@"
+# 	$(MKDIR) -p $@
 
 #***********
 # INCLUDE dependencies
 #***********
 
-include $(patsubst \
-	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$(subst /src,,$($(patsubst %,%.OBJ,$(MODULES)))))
+
+define include_d_prog =
+	include $(patsubst \
+	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$(subst /src,,$($(patsubst %,%.OBJ,$(MODULE)))))
+endef
+
+$(foreach MODULE,$(MODULES),$(eval $(call include_d_prog,$(MODULE))) )
+
+# include $(patsubst \
+# 	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$(subst /src,,$($(patsubst %,%.OBJ,$(MODULES)))))
+# $(warning First include)
+# $(warning $(patsubst %,%.OBJ,$(MODULES)) )
+# $(warning $(foreach OBJ,$(patsubst %,%.OBJ,$(MODULES)),$($(OBJ))) ) 
+# $(warning $(subst /src,,$($(patsubst %,%.OBJ,$(MODULES))) ) )
+# $(warning $(patsubst \
+# 	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$(subst /src,,$($(patsubst %,%.OBJ,$(MODULES))))))
+
 
 DEP_LIB := $(patsubst \
 	$(BUILD_DIR)/%.a,$(DEP_DIR)/%.d,$(addprefix $(BUILD_DIR)/,$(BIN_LIBS)))
 include $(DEP_LIB)
+
 
 #***********
 # CALCULATE dependencies
@@ -141,8 +159,8 @@ $(DEP_LIB): $$(subst .d,.a,$$(subst $$(DEP_DIR),$$(BUILD_DIR),$$@))
 	$(warning dp**$($(subst $(BUILD_DIR)/,,$(basename $<)).OBJ))
 	echo "$@ $<: $($(subst $(BUILD_DIR)/,,$(basename $<)).OBJ)" > $@
 
-$(DEP_DIR)%:
-	$(MKDIR) -p $@
+# $(DEP_DIR)%:
+# 	$(MKDIR) -p $@
 
 
 #***********
