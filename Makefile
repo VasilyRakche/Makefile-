@@ -39,7 +39,7 @@ LDFLAGS := 	\
 ARFLAGS := rcs
 
 
-MODULES := lib/main lib/stm32boot 
+MODULES := lib . 
 
 #***********
 # VARIABLE definitions
@@ -69,6 +69,7 @@ include $(patsubst %,\
 CFLAGS +=$(patsubst %,-I%,\
 	$(INC_PATHS))
 
+BIN_LIBS:=$(addprefix $(BUILD_DIR)/,$(BIN_LIBS))
 # #determine the object files
 
 # OBJ :=                    	\
@@ -79,13 +80,13 @@ CFLAGS +=$(patsubst %,-I%,\
 #***********
 # PROGRAM compilation
 #***********
-
-prog: $(patsubst %,$(BUILD_DIR)/%.a,$(MODULES))
+DEPEND:= $(BUILD_DIR)/main.a $(BUILD_DIR)/lib/stm32boot.a
+prog: $(DEPEND)
 	@echo "DONE"
 	# $(CC) $(CFLAGS) -o $@ $(BIN_LIBS) $(LIBS)
 
 .SECONDEXPANSION:
-$(BUILD_DIR)/%.a: $$($$(addsuffix .OBJ,%))
+$(BUILD_DIR)/%.a: $$(warning $$($$(addsuffix .OBJ,%))) $$($$(addsuffix .OBJ,%))
 	#%.a
 	$(AR) $(ARFLAGS) $@ $^
 
@@ -94,12 +95,12 @@ $(BUILD_DIR)/%.a: $$($$(addsuffix .OBJ,%))
 # GENERATE regular object files
 #***********
 
-var2 = $(dir $(1))src/$(notdir $(1))/$(2).c
-var =$(call var2,\
+join_with_src = $(dir $(1))src/$(notdir $(1))/$(2).c
+to_c =$(call join_with_src,\
 $(patsubst %/$(notdir $(1)),%,$(1)),$(notdir $(1)))
 
 .SECONDEXPANSION:
-$(BUILD_DIR)/%.o: $$(call var,%)
+$(BUILD_DIR)/%.o: $$(warning $$(call to_c,%)) $$(call to_c,%)
 	#%.o		
 	$(MKDIR) -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -109,15 +110,15 @@ $(BUILD_DIR)/%.o: $$(call var,%)
 #***********
 
 
-define include_d_prog =
-	include $(patsubst \
-	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$(subst /src,,$($(patsubst %,%.OBJ,$(MODULE)))))
+define include_d_from_o =
+	include $(patsubst $(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,\
+	$(subst /src,,$($(addsuffix .OBJ,$(1)))))
 endef
-$(foreach MODULE,$(MODULES),$(eval $(call include_d_prog,$(MODULE))) )
+$(foreach MODULE,$(GLOBAL_NAMES),$(eval $(call include_d_from_o,$(MODULE))) )
 
 
 DEP_LIB := $(patsubst \
-	$(BUILD_DIR)/%.a,$(DEP_DIR)/%.d,$(addprefix $(BUILD_DIR)/,$(BIN_LIBS)))
+	$(BUILD_DIR)/%.a,$(DEP_DIR)/%.d,$(BIN_LIBS))
 include $(DEP_LIB)
 
 
@@ -125,7 +126,7 @@ include $(DEP_LIB)
 # CALCULATE dependencies
 #***********
 .SECONDEXPANSION:
-$(DEP_DIR)/%.d: $$(call var,%)	
+$(DEP_DIR)/%.d: $$(call to_c,%)	
 	#%.d		
 	$(MKDIR) -p $(dir $@)	
 	bash depend.sh 'dirname $@' \
