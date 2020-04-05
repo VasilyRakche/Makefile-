@@ -75,9 +75,6 @@ CFLAGS +=$(patsubst %,-I%,\
 # 	$(patsubst %.c,$(BUILD_DIR)/%.o,		\
 # 	$(subst /src,,$(SRC)))	
 
-sources = $(1)src/$(basename $(2)).c
-variable = 	$(dir $(subst $(addprefix /,$(2)),,$(1)))src/$(notdir $(subst $(addprefix /,$(2)),,$(1)))/$(basename $(2)).c
-		# $(warning variable and $(2) $(1) and $(subst $(addprefix /,$(2)),,$(1)) )
 
 #***********
 # PROGRAM compilation
@@ -89,8 +86,7 @@ prog: $(patsubst %,$(BUILD_DIR)/%.a,$(MODULES))
 
 .SECONDEXPANSION:
 $(BUILD_DIR)/%.a: $$($$(addsuffix .OBJ,%))
-	# @echo ".a****** $^"
-	# @echo ".a****** $(patsubst %.a,%.OBJ,$@)" 
+	#%.a
 	$(AR) $(ARFLAGS) $@ $^
 
 
@@ -98,19 +94,15 @@ $(BUILD_DIR)/%.a: $$($$(addsuffix .OBJ,%))
 # GENERATE regular object files
 #***********
 
-.SECONDEXPANSION:
-$(BUILD_DIR)/%.o:$$(call variable,							\
-	$$(subst $$(BUILD_DIR)/,,$$@),				\
-	$$(notdir $$@)							\
-	)									
-	# $$(dir $$@)		
-	$(MKDIR) -p $(dir $@)
-	# @echo ".o******$(BUILD_DIR)/$(subst /src,,$@)"
-	$(CC) $(CFLAGS) -c $< -o $@
+var2 = $(dir $(1))src/$(notdir $(1))/$(2).c
+var =$(call var2,\
+$(patsubst %/$(notdir $(1)),%,$(1)),$(notdir $(1)))
 
-# $(BUILD_DIR)%: 
-# 	# @echo "build************ $@"
-# 	$(MKDIR) -p $@
+.SECONDEXPANSION:
+$(BUILD_DIR)/%.o: $$(call var,%)
+	#%.o		
+	$(MKDIR) -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 #***********
 # INCLUDE dependencies
@@ -121,17 +113,7 @@ define include_d_prog =
 	include $(patsubst \
 	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$(subst /src,,$($(patsubst %,%.OBJ,$(MODULE)))))
 endef
-
 $(foreach MODULE,$(MODULES),$(eval $(call include_d_prog,$(MODULE))) )
-
-# include $(patsubst \
-# 	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$(subst /src,,$($(patsubst %,%.OBJ,$(MODULES)))))
-# $(warning First include)
-# $(warning $(patsubst %,%.OBJ,$(MODULES)) )
-# $(warning $(foreach OBJ,$(patsubst %,%.OBJ,$(MODULES)),$($(OBJ))) ) 
-# $(warning $(subst /src,,$($(patsubst %,%.OBJ,$(MODULES))) ) )
-# $(warning $(patsubst \
-# 	$(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,$(subst /src,,$($(patsubst %,%.OBJ,$(MODULES))))))
 
 
 DEP_LIB := $(patsubst \
@@ -143,13 +125,9 @@ include $(DEP_LIB)
 # CALCULATE dependencies
 #***********
 .SECONDEXPANSION:
-%.d:$$(call variable,		\
-	$$(subst $$(DEP_DIR)/,,$$@),				\
-	$$(notdir $$@)							\
-	)									
-	# $$(dir $$@)
+$(DEP_DIR)/%.d: $$(call var,%)	
+	#%.d		
 	$(MKDIR) -p $(dir $@)	
-	@echo ".d******* $^"
 	bash depend.sh 'dirname $@' \
 	'dirname $(patsubst $(DEP_DIR)%,$(BUILD_DIR)%,$@)'   \
 	$(CFLAGS) $< > $@
@@ -157,12 +135,9 @@ include $(DEP_LIB)
 
 .SECONDEXPANSION:
 $(DEP_LIB): $$(subst .d,.a,$$(subst $$(DEP_DIR),$$(BUILD_DIR),$$@))
+	#DEP_LIB
 	$(MKDIR) -p $(dir $@)
-	$(warning dp**$($(subst $(BUILD_DIR)/,,$(basename $<)).OBJ))
 	echo "$@ $<: $($(subst $(BUILD_DIR)/,,$(basename $<)).OBJ)" > $@
-
-# $(DEP_DIR)%:
-# 	$(MKDIR) -p $@
 
 
 #***********
@@ -171,4 +146,4 @@ $(DEP_LIB): $$(subst .d,.a,$$(subst $$(DEP_DIR),$$(BUILD_DIR),$$@))
 
 .PHONY: clean
 clean:
-	rm -rf prog $(wildcard $(SRC_DIR)/*.o) $(DEP_DIR) $(BUILD_DIR)
+	rm -rf prog $(DEP_DIR) $(BUILD_DIR)
