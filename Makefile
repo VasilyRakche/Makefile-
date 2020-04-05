@@ -70,6 +70,7 @@ CFLAGS +=$(patsubst %,-I%,\
 	$(INC_PATHS))
 
 # #determine the object files
+
 # OBJ :=                    	\
 # 	$(patsubst %.c,$(BUILD_DIR)/%.o,		\
 # 	$(subst /src,,$(SRC)))	
@@ -77,7 +78,7 @@ CFLAGS +=$(patsubst %,-I%,\
 sources = $(1)src/$(basename $(2)).c
 variable = 	$(dir $(subst $(addprefix /,$(2)),,$(1)))src/$(notdir $(subst $(addprefix /,$(2)),,$(1)))/$(basename $(2)).c
 		# $(warning variable and $(2) $(1) and $(subst $(addprefix /,$(2)),,$(1)) )
-objects = $(patsubst $(BUILD_DIR)/%.a,%.OBJ,$(1))
+
 #***********
 # PROGRAM compilation
 #***********
@@ -87,7 +88,7 @@ prog: $(patsubst %,$(BUILD_DIR)/%.a,$(MODULES))
 	# $(CC) $(CFLAGS) -o $@ $(BIN_LIBS) $(LIBS)
 
 .SECONDEXPANSION:
-%.a: $$($$(call objects,$$@))
+$(BUILD_DIR)/%.a: $$($$(addsuffix .OBJ,%))
 	# @echo ".a****** $^"
 	# @echo ".a****** $(patsubst %.a,%.OBJ,$@)" 
 	$(AR) $(ARFLAGS) $@ $^
@@ -96,8 +97,9 @@ prog: $(patsubst %,$(BUILD_DIR)/%.a,$(MODULES))
 #***********
 # GENERATE regular object files
 #***********
+
 .SECONDEXPANSION:
-%.o:$$(call variable,							\
+$(BUILD_DIR)/%.o:$$(call variable,							\
 	$$(subst $$(BUILD_DIR)/,,$$@),				\
 	$$(notdir $$@)							\
 	)									
