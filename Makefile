@@ -1,5 +1,12 @@
 .SECONDARY:
 
+# DEBUG INFO for function calls
+ifdef DEBUG
+ECHO :=
+else
+ECHO := @
+endif
+
 MAKEFLAGS += -r
 DEP_DIR := .deps
 MKDIR := mkdir
@@ -24,7 +31,7 @@ CFLAGS :=	\
 	-g	\
 	-O0
 
-LDFLAGS := 	\
+LDFLAGS = 	\
 	-Wl,--gc-sections,-Map=$@.map,-cref,--orphan-handling=warn,-u,Reset_Handler \
 	-Tstm32.ld 
 
@@ -71,8 +78,8 @@ CFLAGS +=$(patsubst %,-I%,\
 #***********
 
 $(BUILD_DIR)/$(PROJECT).elf: $(BIN_FILES) $(BIN_LIBS)
-	#.elf
-	$(CC) $(CFLAGS) $(LIBS) $^ $(LDFLAGS) -o $@  
+	$(ECHO)#.elf
+	$(ECHO)$(CC) $(CFLAGS) $(LIBS) $^ $(LDFLAGS) -o $@  
 
 #***********
 # CUSTOM BINARY LIBRARIES compilation
@@ -80,8 +87,8 @@ $(BUILD_DIR)/$(PROJECT).elf: $(BIN_FILES) $(BIN_LIBS)
 
 .SECONDEXPANSION:
 $(BUILD_DIR)/%.a: $$($$(addsuffix .OBJ,%))
-	#%.a
-	$(AR) $(ARFLAGS) $@ $^
+	$(ECHO)#%.a
+	$(ECHO)$(AR) $(ARFLAGS) $@ $^
 
 #***********
 # MAKE FUNCTIONS scripts
@@ -112,9 +119,9 @@ endef
 
 .SECONDEXPANSION:
 $(BUILD_DIR)/%.o: $$(call to_c,%)
-	#%.o		
-	$(MKDIR) -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(ECHO)#%.o		
+	$(ECHO)$(MKDIR) -p $(dir $@)
+	$(ECHO)$(CC) $(CFLAGS) -c $< -o $@
 
 #***********
 # INCLUDE dependencies
@@ -134,18 +141,18 @@ include $(DEP_LIB)
 #***********
 .SECONDEXPANSION:
 $(DEP_DIR)/%.d: $$(call to_c,%)	
-	#%.d		
-	$(MKDIR) -p $(dir $@)	
-	bash depend.sh 'dirname $@' \
+	$(ECHO)#%.d		
+	$(ECHO)$(MKDIR) -p $(dir $@)	
+	$(ECHO)bash depend.sh 'dirname $@' \
 	'dirname $(patsubst $(DEP_DIR)%,$(BUILD_DIR)%,$@)'   \
 	$(CFLAGS) $< > $@
 
 
 .SECONDEXPANSION:
 $(DEP_LIB): $$(subst .d,.a,$$(subst $$(DEP_DIR),$$(BUILD_DIR),$$@))
-	#DEP_LIB
-	$(MKDIR) -p $(dir $@)
-	echo "$@ $<: $($(subst $(BUILD_DIR)/,,$(basename $<)).OBJ)" > $@
+	$(ECHO)#DEP_LIB
+	$(ECHO)$(MKDIR) -p $(dir $@)
+	$(ECHO)echo "$@ $<: $($(subst $(BUILD_DIR)/,,$(basename $<)).OBJ)" > $@
 
 
 #***********
