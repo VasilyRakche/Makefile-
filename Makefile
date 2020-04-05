@@ -11,6 +11,9 @@ CC := arm-none-eabi-gcc
 AR := arm-none-eabi-ar
 LD := arm-none-eabi-gcc
 
+
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+mkfile_dir := $(dir $(mkfile_path))
 #***********
 # VARIABLE definitions
 #***********
@@ -44,7 +47,7 @@ MODULES := lib .
 #***********
 # VARIABLE definitions
 #***********
-
+MODULE_GLOBAL_NAMES :=
 #extra libraries if required
 LIBS :=
 
@@ -52,12 +55,15 @@ LIBS :=
 #***********
 # INCLUDE module descriptions
 #***********
-define module_handler
-include $(1)/module.mk
-include handler.mk
-endef
+# define module_handler
+# include $(1)/module.mk
+# include handler.mk
+# endef
 
-$(foreach MODULE,$(MODULES),$(eval $(call module_handler,$(MODULE))) )
+# $(foreach MODULE,$(MODULES),$(eval $(call module_handler,$(MODULE))) )
+
+include $(patsubst %,\
+       %/module.mk,$(MODULES))
 #***********
 # CHECK
 #***********
@@ -116,7 +122,7 @@ define include_d_from_o =
 	include $(patsubst $(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,\
 	$(subst /src,,$($(addsuffix .OBJ,$(1)))))
 endef
-$(foreach MODULE,$(GLOBAL_NAMES),$(eval $(call include_d_from_o,$(MODULE))) )
+$(foreach MODULE,$(MODULE_GLOBAL_NAMES),$(eval $(call include_d_from_o,$(MODULE))) )
 
 
 DEP_LIB := $(patsubst \

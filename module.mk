@@ -1,7 +1,8 @@
 NAME := main
 DIR := 
-ISLIB :=
+ISLIB := 
 
+include $(mkfile_dir)/handler.mk
 # $(warning in $(NAME))
 # $(warning $(DIR)/$(NAME).OBJ) 
 # $(warning $($(DIR)/$(NAME).OBJ)) 

@@ -1,6 +1,7 @@
 # In module.mk are defined:
 #	NAME
 #	DIR
+#	ISLIB
 
 
 ifdef  DIR
@@ -15,7 +16,7 @@ GLOBAL_NAME := $(NAME)
 INC_PATHS += inc/$(NAME)
 endif
 
-MODULE_NAMES += $(GLOBAL_NAME)
+MODULE_GLOBAL_NAMES += $(GLOBAL_NAME)
 
 ifeq ($(ISLIB),YES)
 $(warning ISLIB $(NAME))

@@ -2,7 +2,7 @@ NAME := stm32boot
 DIR := lib
 ISLIB := YES
 
-
+include $(mkfile_dir)/handler.mk
 # SRC += ant/src/main.c
 
 # $(warning A top-level warning $(SRC))
