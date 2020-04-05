@@ -52,10 +52,12 @@ LIBS :=
 #***********
 # INCLUDE module descriptions
 #***********
+define module_handler
+include $(1)/module.mk
+include handler.mk
+endef
 
-include $(patsubst %,\
-	%/module.mk,$(MODULES))
-
+$(foreach MODULE,$(MODULES),$(eval $(call module_handler,$(MODULE))) )
 #***********
 # CHECK
 #***********
