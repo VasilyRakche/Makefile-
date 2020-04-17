@@ -17,6 +17,9 @@ DIR :=
 #						Object files are added to
 #						the BIN_FILES 
 #
+#	Where to look for sources and headers:
+SRC_DIR:= src/$(NAME)
+INC_PATH:=inc/$(NAME)
 #	BIN_LIBS and BIN_FILES are used for .elf file gen.
 ISLIB := 
 # 	handler.mk is used to set up all global parameters

@@ -32,7 +32,7 @@ CFLAGS :=	\
 	-O0
 
 LDFLAGS = 	\
-	-Wl,--gc-sections,-Map=$@.map,-cref,--orphan-handling=warn,-u,Reset_Handler \
+	-Wl,--gc-sections,-Map=$@.map,-cref,-u,Reset_Handler \
 	-Tstm32.ld 
 
 ARFLAGS := rcs
@@ -91,34 +91,11 @@ $(BUILD_DIR)/%.a: $$($$(addsuffix .OBJ,%))
 	$(ECHO)$(AR) $(ARFLAGS) $@ $^
 
 #***********
-# MAKE FUNCTIONS scripts
-#***********
-
-# For adding src to supplied PATH
-# in a way:
-# 	lib/main/main to lib/src/main/main.c
-# 	or main/main to src/main/main.c
-#
-# Called by: $(BUILD_DIR)/%.o and $(DEP_DIR)/%.d 
-join_with_src = $(dir $(1))src/$(notdir $(1))/$(2).c
-to_c =$(call join_with_src,\
-$(patsubst %/$(notdir $(1)),%,$(1)),$(notdir $(1)))
-
-# For setting right directory path and .d includes
-# 	build/lib/main/main.o to .deps/lib/main/main.d
-#
-# Called by: INCLUDE dependencies
-define include_d_from_o =
-	include $(patsubst $(BUILD_DIR)/%.o,$(DEP_DIR)/%.d,\
-	$($(addsuffix .OBJ,$(1))))
-endef
-
-#***********
 # GENERATE regular object files
 #***********
 
 .SECONDEXPANSION:
-$(BUILD_DIR)/%.o: $$(call to_c,%)
+$(BUILD_DIR)/%.o: $$(wildcard %*)
 	$(ECHO)#%.o		
 	$(ECHO)$(MKDIR) -p $(dir $@)
 	$(ECHO)$(CC) $(CFLAGS) -c $< -o $@
@@ -127,9 +104,7 @@ $(BUILD_DIR)/%.o: $$(call to_c,%)
 # INCLUDE dependencies
 #***********
 
-# For .o file includes, calls function include_d_from_o
-$(foreach MODULE,$(MODULE_GLOBAL_NAMES),$(eval $(call include_d_from_o,$(MODULE))) )
-
+include $(patsubst $(BUILD_DIR)/%.o,$(DEP_DIR)/%.d, $(BIN_FILES))
 #For CUSTOM BINARY LIBRARIES(.a), .d file generation
 DEP_LIB := $(patsubst \
 	$(BUILD_DIR)/%.a,$(DEP_DIR)/%.d,$(BIN_LIBS))
@@ -140,7 +115,7 @@ include $(DEP_LIB)
 # CALCULATE dependencies
 #***********
 .SECONDEXPANSION:
-$(DEP_DIR)/%.d: $$(call to_c,%)	
+$(DEP_DIR)/%.d: $$(wildcard %*)
 	$(ECHO)#%.d		
 	$(ECHO)$(MKDIR) -p $(dir $@)	
 	$(ECHO)bash depend.sh 'dirname $@' \

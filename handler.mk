@@ -3,21 +3,14 @@
 #	DIR
 #	ISLIB
 
-#	If DIR is undefined then:
-#				module.mk is in Makefile root folder
-#				SRC_PREFIX is used to delete src from
-#					OBJ path 
 ifdef  DIR
-SRC_PREFIX := /src
-SRC_DIR:= $(DIR)/src/$(NAME)
 GLOBAL_NAME := $(DIR)/$(NAME)
-INC_PATHS += $(DIR)/inc/$(NAME)
+INC_PATHS += $(INC_PATH)
 else
-SRC_PREFIX := src/
-SRC_DIR:= src/$(NAME)
 GLOBAL_NAME := $(NAME)
 INC_PATHS += inc/$(NAME)
 endif
+
 
 #	Under these names .d files are generated
 MODULE_GLOBAL_NAMES += $(GLOBAL_NAME)
@@ -29,8 +22,7 @@ MODULE_GLOBAL_NAMES += $(GLOBAL_NAME)
 $(GLOBAL_NAME).SRC := 		\
 	$(wildcard $(SRC_DIR)/*.c)
 $(GLOBAL_NAME).OBJ := 		\
-	$(patsubst %.c,$(BUILD_DIR)/%.o,		\
-	$(subst $(SRC_PREFIX),,$($(GLOBAL_NAME).SRC)))
+	$(patsubst %.c,$(BUILD_DIR)/%.o,$($(GLOBAL_NAME).SRC))
 
 #	Library is generated and added to BIN_LIBS
 # 	OBJ files are added to BIN_FILES
@@ -38,6 +30,7 @@ $(GLOBAL_NAME).OBJ := 		\
 #	BIN_LIBS and BIN_FILES are used for .elf file gen.
 ifeq ($(ISLIB),YES)
 BIN_LIBS += $(BUILD_DIR)/$(GLOBAL_NAME).a
+BIN_FILES += $($(GLOBAL_NAME).OBJ)
 else 
 BIN_FILES += $($(GLOBAL_NAME).OBJ)
 endif
