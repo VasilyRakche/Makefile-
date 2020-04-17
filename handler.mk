@@ -5,12 +5,10 @@
 
 ifdef  DIR
 GLOBAL_NAME := $(DIR)/$(NAME)
-INC_PATHS += $(INC_PATH)
 else
 GLOBAL_NAME := $(NAME)
-INC_PATHS += inc/$(NAME)
 endif
-
+INC_PATHS += $(INC_PATH)
 
 #	Under these names .d files are generated
 MODULE_GLOBAL_NAMES += $(GLOBAL_NAME)
@@ -19,8 +17,16 @@ MODULE_GLOBAL_NAMES += $(GLOBAL_NAME)
 #	OBJ files with right directory are set up
 #		lib/src/main/main.o to build/lib/main/main.o
 
-$(GLOBAL_NAME).SRC := 		\
-	$(wildcard $(SRC_DIR)/*.c)
+$(GLOBAL_NAME).SRC :=
+#Function for adding source files from each DIR in SRC_DIR
+define add_src =
+	$(GLOBAL_NAME).SRC := 		\
+		$(wildcard $(1)/*.c)
+	$(GLOBAL_NAME).SRC += 		\
+		$(wildcard $(1)/*.S)
+endef
+$(foreach DIRECTORY,$(SRC_DIR),$(eval $(call add_src,$(DIRECTORY))) )
+
 $(GLOBAL_NAME).OBJ := 		\
 	$(patsubst %.c,$(BUILD_DIR)/%.o,$($(GLOBAL_NAME).SRC))
 
@@ -34,4 +40,5 @@ BIN_FILES += $($(GLOBAL_NAME).OBJ)
 else 
 BIN_FILES += $($(GLOBAL_NAME).OBJ)
 endif
+
 

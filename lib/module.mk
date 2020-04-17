@@ -18,7 +18,8 @@ DIR := lib
 #						the BIN_FILES 
 #
 #	Where to look for sources and headers:
-SRC_DIR:= $(DIR)/src/$(NAME)
+SRC_DIR:= $(DIR)/src/$(NAME) \
+	$(DIR)/src/$(NAME)/additional
 INC_PATH:=$(DIR)/inc/$(NAME)
 #	BIN_LIBS and BIN_FILES are used for .elf file gen.
 ISLIB := YES
