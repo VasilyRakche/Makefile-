@@ -20,7 +20,7 @@ MODULE_GLOBAL_NAMES += $(GLOBAL_NAME)
 $(GLOBAL_NAME).SRC :=
 #Function for adding source files from each DIR in SRC_DIR
 define add_src =
-	$(GLOBAL_NAME).SRC := 		\
+	$(GLOBAL_NAME).SRC += 		\
 		$(wildcard $(1)/*.c)
 	$(GLOBAL_NAME).SRC += 		\
 		$(wildcard $(1)/*.S)
