@@ -16,14 +16,19 @@ PROJECT := stm32f10x
 #***********
 # COMPILER options
 #*********** 
-CC := arm-none-eabi-gcc
-AR := arm-none-eabi-ar
-LD := arm-none-eabi-gcc
+
+CROSS_COMPILE ?= arm-none-eabi-
+CC := $(CROSS_COMPILE)gcc
+AR := $(CROSS_COMPILE)ar
+LD := $(CROSS_COMPILE)gcc
+OCP := $(CROSS_COMPILE)objcopy
 
 
 #***********
 # VARIABLE definitions
 #***********
+
+MAIN_OUT := $(BUILD_DIR)/$(PROJECT)
 
 CFLAGS :=	\
 	-mcpu=cortex-m3 \
@@ -34,6 +39,8 @@ CFLAGS :=	\
 LDFLAGS = 	\
 	-Wl,--gc-sections,-Map=$@.map,-cref,-u,Reset_Handler \
 	-Tstm32.ld 
+
+OBJCPFLAGS = -O binary
 
 ARFLAGS := rcs
 
@@ -77,8 +84,12 @@ CFLAGS +=$(patsubst %,-I%,\
 # PROGRAM compilation
 #***********
 
-$(BUILD_DIR)/$(PROJECT).elf: $(BIN_FILES) $(BIN_LIBS)
-	$(ECHO)#.elf
+$(MAIN_OUT).bin: $(MAIN_OUT).elf
+	$(ECHO)#%.bin	
+	$(OCP) $(OBJCPFLAGS) $< $@
+
+$(MAIN_OUT).elf: $(BIN_FILES) $(BIN_LIBS)
+	$(ECHO)#%.elf
 	$(ECHO)$(CC) $(CFLAGS) $(LIBS) $^ $(LDFLAGS) -o $@  
 
 #***********
